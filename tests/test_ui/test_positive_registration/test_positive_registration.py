@@ -70,21 +70,11 @@ def test_positive_registration_all_field_entering(browser, base_url_ui, faker_da
     browser.find_element(By.ID, 'pass2').send_keys(faker_data['password'])
     browser.find_element(By.ID, "email").send_keys(faker_data['email'])
     browser.find_element(By.CSS_SELECTOR, '.ui.button.blue').click()
-    #wait.until(EC.url_to_be(f'{base_url_ui}/login')) Тo do распечатать когда заработает
     alert = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "[role='alert'] div:last-child")))
-    #alert = browser.find_element(By.CSS_SELECTOR, "[role='alert'] div:last-child")
     assert alert.get_attribute('textContent') == fail_alert_message # времянка вместо 'Вы успешно зарегистрировались'
-
-    #'Пользователь с таким email уже зарегистрирован в другом тасте'
-    #'Что-то пошло не так. Пожалуйста, попробуйте позже'
 
 @pytest.mark.ui
 @pytest.mark.registration_positive
-# @pytest.mark.parametrize("email, name, password", [
-#     ('test_sadlik4@mail.com', "Sadlik13", "Qwerty123"),
-#     ('test_sadlik24@mail.com', "Sadlik110", "Qqqqwerty123"),
-#     ('test_sadlik222@mail.com', "Sadlk123", "Qqwert123")
-#])
 def test_positive_registration_minimum_length_passwords(browser, base_url_ui, wait, faker_data,
                                                            fail_alert_message, success_alert_message):
     browser.get(base_url_ui+'/sign_up')
@@ -103,12 +93,5 @@ def test_positive_registration_minimum_length_passwords(browser, base_url_ui, wa
     alert = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "[role='alert'] div:last-child")))
     assert alert.get_attribute('textContent') == fail_alert_message  #времянка вместо 'Пользователь с таким email уже зарегистрирован'
 
-
-
-# @pytest.mark.parametrize("email, name, password", [
-#     ('user1@example.com', "UserOne", "Password123"),
-#     ('user2@example.com', "UserTwo", "SecurePass456"),
-#     ('user3@example.com', "UserThree", "StrongPass789")
-# ])
 def test_reg():
     pass
