@@ -42,6 +42,7 @@ def test_username_min_length(faker_data, api_url):
     assert 'id' in response.json()
     assert response.json()['username'] == user_data['username']
 
+
 @pytest.mark.api
 @pytest.mark.positive
 @pytest.mark.user_registration
