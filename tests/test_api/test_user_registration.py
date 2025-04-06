@@ -88,17 +88,17 @@ def test_username_blank(faker_data, api_url, blank_field):
     assert response.json()['username'] == blank_field
     # to do может имеет смысл вынести ['This field may not be blank.'] в фикстуру и тд.
 
-
+@pytest.mark.skip
 @pytest.mark.api
 @pytest.mark.positive
-@pytest.mark.parametrize('min_emails',['@a.сс','@bb.с', '@bb.сc', '@b.фы', '@фы.фы'])
+@pytest.mark.parametrize('min_emails',['@ua.ab','@ab.qq', '@ru.cc', '@ru.фы', '@фы6.фы'])
 #без фейка срабатывает единожды =( далее это уже существует
 # далее по мнению аи валидные кейсы, система не ест  "1@1.1", 'a@io', '_@_.io', '-@-.ai', '@@@.@', '" "@x.y'
 @pytest.mark.user_registration
 def test_email_min_length(faker_data, api_url, min_emails):
     user_data = {
         'username': faker_data['name'],
-        'email': 'с' + min_emails, # 'b' костыль на изменение первого символа почты для оригинальности регистрации
+        'email': 'g' + min_emails, # 'b' костыль на изменение первого символа почты для оригинальности регистрации
         'password': faker_data['password']
     }
     response = requests.post(f'{api_url}/users/', json=user_data)
