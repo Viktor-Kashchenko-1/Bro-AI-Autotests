@@ -1,4 +1,5 @@
 selenium==4.28.1
-pytest==7.0.1
+pytest>=7.0.1
 webdriver-manager==4.0.2
 faker == 37.0.0
+requests~=2.32.3
