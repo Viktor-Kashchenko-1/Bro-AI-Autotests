@@ -7,7 +7,7 @@ fake = Faker('ru_RU')
 @pytest.fixture()
 def faker_data():
     return {
-        'name': fake.name(),
+        'name': fake.first_name(),
         'password': fake.password(8, False, True),
         'email': fake.ascii_free_email()
     }
