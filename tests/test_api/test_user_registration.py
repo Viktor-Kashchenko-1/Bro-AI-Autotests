@@ -61,7 +61,7 @@ def test_username_max_length(faker_data, api_url):
 @pytest.mark.api
 @pytest.mark.negative
 @pytest.mark.user_registration
-def test_username_exceed_length(faker_data, api_url):
+def test_username_exceeds_length(faker_data, api_url):
     username_length = 'b' * 256
     user_data = {
         'username': username_length,
@@ -129,7 +129,7 @@ def test_email_max_length(faker_data, api_url):
 @pytest.mark.negative
 @pytest.mark.user_registration
 @pytest.mark.xfail(reason='проверка коммента xfail')
-def test_email_exceed_length(faker_data, api_url):
+def test_email_exceeds_length(faker_data, api_url):
     max_len_mail = (''.join(random.choices(string.ascii_lowercase, k=39)) + '@example.com')
     user_data = {
         'username': faker_data['name'],
@@ -153,3 +153,17 @@ def test_email_exceed_length(faker_data, api_url, blank_field):
     response = requests.post(f'{api_url}/users/', json=user_data)
     assert response.status_code == 400
     assert response.json()['email'] == blank_field
+
+
+@pytest.mark.negative
+@pytest.mark.user_registration
+def test_password_blank(api_url, faker_data, blank_field):
+    blank_pass = ''
+    user_data = {
+        'username': faker_data['name'],
+        'email': faker_data['email'],
+        'password': blank_pass
+    }
+    response = requests.post(f'{api_url}/users/', json=user_data)
+    assert response.status_code == 400
+    assert response.json()['password'] == blank_field
