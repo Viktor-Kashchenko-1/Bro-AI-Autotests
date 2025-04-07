@@ -1,88 +1,12 @@
 import pytest
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
-from webdriver_manager.chrome import ChromeDriverManager
-from faker import Faker
-from webdriver_manager.firefox import GeckoDriverManager
 
+"""нужно использовать для работы многопоточности с случайными параметризациями"""
+# seed = 1
+# fake_element.seed_instance(seed)
+# random.seed(seed)
 
-@pytest.fixture
-def faker_data():
-    fake= Faker("ru_Ru")
-    return {
-        'email': fake.ascii_free_email(),
-        'name': fake.first_name(),
-        'password': fake.password(length=8, upper_case=True, lower_case=False)
-    }
-
-@pytest.fixture
-def fail_alert_message():
-    return 'Что-то пошло не так. Пожалуйста, попробуйте позже'
-
-@pytest.fixture
-def requirement_field_error():
-    return 'Это поле обязательно'
-
-@pytest.fixture
-def success_alert_message():
-    return 'Вы успешно зарегистрировались// или что то такое'
-
-@pytest.fixture(params=["Chrome"])
-def browser(request, base_url_ui):  #base_url_ui extra
-    if request.param == "Chrome":
-        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
-    elif request.param == "Firefox":
-        driver = webdriver.Firefox(service=Service(GeckoDriverManager().install()))
-    driver.set_window_size(1100, 700)
-    yield driver
-    driver.quit()
-
-@pytest.fixture
-def base_url_ui():
-    return 'http://95.182.122.183:3000'
-
-@pytest.fixture
-def wait(browser):
-    return WebDriverWait(browser, 10)
-
-@pytest.fixture(params=[
-    {'email': '',
-    'pass1': '123Qwerty',
-    'pass2': '123Qwerty',
-    'name': 'Sadlik30'},
-    {'email': 'test_sadlik3@mail.com',
-    'pass1': '',
-    'pass2': '123Qwerty',
-    'name': 'Sadlik30'},
-    {'email': 'test_sadlik2@mail.com',
-    'pass1': '123Qwerty',
-    'pass2': '',
-    'name': 'Sadlik27'},
-    {'email': 'test_sadlik3@mail.com',
-     'pass1': '123Qwerty',
-     'pass2': '123Qwerty',
-     'name': ''}
-])
-def user_data_with_1_empty(request):
-    return request.param
-
-
-# @pytest.fixture(params=[
-#     {'email': 'test_sadlik1@mail.com',
-#     'password': 'Qwerty123',
-#     'name': 'Sadlik10'},
-#     {'email': 'test_sadlik2@mail.com',
-#     'password': '123Qwerty',
-#     'name': 'Sadlik27'},
-#     {'email': 'test_sadlik3@mail.com',
-#     'password': 'qWerty123',
-#     'name': 'Sadlik30'}
-# ])
-# def exist_users_data(request):
-#     return request.param
 
 @pytest.mark.ui
 @pytest.mark.registration_negative
