@@ -87,7 +87,7 @@ def registered_user_data(browser, base_url_ui, faker_data, wait, success_alert_m
 
 # 1 test
 @pytest.mark.ui
-@pytest.mark.positive
+@pytest.mark.positive 
 @pytest.mark.registration_positive
 def test_positive_registration_all_entering(browser, base_url_ui, faker_data, wait,
                                             fail_alert_message, success_alert_message):
