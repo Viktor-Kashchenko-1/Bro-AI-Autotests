@@ -1,11 +1,16 @@
 import pytest
+import random
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
+from faker import Faker
 
-"""нужно использовать для работы многопоточности с случайными параметризациями"""
-# seed = 1
-# fake_element.seed_instance(seed)
-# random.seed(seed)
+fake_element = Faker("ru_Ru")
+
+"""нужно использовать для работы многопоточности с случайными параметризациями 
+by faker/ ramdom"""
+seed = 1
+fake_element.seed_instance(seed)
+random.seed(seed)
 
 
 @pytest.mark.ui

@@ -8,15 +8,9 @@ from selenium.webdriver.support import expected_conditions as EC
 fake_element = Faker("ru_Ru")
 
 """нужно использовать для работы многопоточности с случайными параметризациями"""
-# seed = 1
-# fake_element.seed_instance(seed)
-# random.seed(seed)
-
-
-"""Fixtures--------------------------------------"""
-
-"""End-----Fixtures-----------------------------"""
-
+seed = 1
+fake_element.seed_instance(seed)
+random.seed(seed)
 
 # 1 test
 @pytest.mark.ui
@@ -158,6 +152,7 @@ def test_positive_registration_maximum_length_username(browser, base_url_ui, wai
 @pytest.mark.ui
 @pytest.mark.positive
 @pytest.mark.registration_positive
+@pytest.mark.multi_core_fail
 def test_valid_email_domains(browser, base_url_ui, faker_data, wait, e_domain,
                              fail_alert_message, success_alert_message):
     browser.get(f'{base_url_ui}/sign_up')

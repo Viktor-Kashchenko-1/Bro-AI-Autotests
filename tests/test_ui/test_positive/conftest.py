@@ -1,10 +1,13 @@
 import pytest
 from faker import Faker
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.service import Service as ChromeService
+from selenium.webdriver.firefox.service import Service as FirefoxService
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.chrome.options import Options as Ch_Option
+from selenium.webdriver.firefox.options import Options as FF_Option
 from webdriver_manager.chrome import ChromeDriverManager
 from webdriver_manager.firefox import GeckoDriverManager
 
@@ -29,13 +32,19 @@ def success_alert_message():
     return 'Вы успешно зарегистрировались или что то такое'
 
 
-@pytest.fixture(params=["Chrome"])
-def browser(request, base_url_ui):  #base_url_ui extra
+@pytest.fixture(params=["Chrome", "Firefox"]) # "Chrome", "Firefox" etc.
+def browser(request):
     if request.param == "Chrome":
-        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
+        options = Ch_Option()
+        options.add_argument('--headless')
+        options.add_argument('--windows-size=1100,700')
+        options.add_argument("--disable-gpu")
+        driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
     elif request.param == "Firefox":
-        driver = webdriver.Firefox(service=Service(GeckoDriverManager().install()))
-    driver.set_window_size(1100, 700)
+        options = FF_Option()
+        options.add_argument('--headless')
+        driver = webdriver.Firefox(options=options) #service=FirefoxService(GeckoDriverManager().install()), options=options
+    #driver.set_window_size(1100, 700)
     yield driver
     driver.quit()
 

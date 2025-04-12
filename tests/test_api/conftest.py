@@ -8,7 +8,7 @@ fake = Faker('ru_RU')
 def faker_data():
     return {
         'name': fake.first_name(),
-        'password': fake.password(8, False, True),
+        'password': fake.password(14),
         'email': fake.ascii_free_email()
     }
 
