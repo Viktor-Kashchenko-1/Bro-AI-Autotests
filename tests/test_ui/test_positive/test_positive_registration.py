@@ -10,21 +10,21 @@ from selenium.webdriver.support import expected_conditions as EC
 from tests.test_ui.test_negative.conftest import faker_data
 
 #To do вынести на глобальный уровень инициализацию сидов обьектов с генераторами случайности
-def get_seeded_local_random_and_faker(seed: int = None):
-    """Создаёт random.Random и Faker с общим случайным сидом"""
-    if seed is None:
-        seed = int(time.time() * 1000) + os.getpid()
-    print(f"[DEBUG] Используемый сид: {seed}")
+# def get_seeded_local_random_and_faker(seed: int = None):
+#     """Создаёт random.Random и Faker с общим случайным сидом"""
+#     if seed is None:
+#         seed = int(time.time() * 1000) + os.getpid()
+#     print(f"[DEBUG] Используемый сид: {seed}")
+#
+#     rnd = random.Random(seed)
+#     fake = Faker()
+#     fake.random = rnd
+#     return fake    #rnd, fake
 
-    rnd = random.Random(seed)
-    fake = Faker()
-    fake.random = rnd
-    return rnd, fake
-
-"""нужно использовать конкретное число для работы многопоточности с *повторяемостью*  параметризации
+"""нужно использовать конкретное число для работы многопоточности с детерминированой параметризацией
 без конфликтов, иначе сыпятся Different tests were collected between gwX and gwY ексепшены"""
-local_random, fake_element = get_seeded_local_random_and_faker() # defined int 1,2,12534,etc. for multithreading case
-
+#fake_element = get_seeded_local_random_and_faker() # defined int 1,2,12534,etc. for multithreading case
+fake_element = Faker()
 
 # 1 test
 @pytest.mark.ui
@@ -39,7 +39,7 @@ def test_positive_registration_all_entering(browser, base_url_ui, faker_data, wa
     browser.find_element(By.ID, 'pass2').send_keys(faker_data['password']+ 'qwe')
     browser.find_element(By.ID, "email").send_keys(faker_data['email'])
     browser.find_element(By.CSS_SELECTOR, '.ui.button.blue').click()
-    #wait.until(EC.url_to_be(f'{base_url_ui}/login')) Тo do распечатать когда заработает
+    #wait.until(EC.url_to_be(f'{base_url_ui}/login')) Тo do распечатать коммент когда заработает
     alert = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "[role='alert'] div:last-child")))
 
     assert alert.get_attribute('textContent') == fail_alert_message # времянка вместо 'Вы успешно зарегистрировались'
@@ -54,17 +54,13 @@ def test_positive_registration_all_entering(browser, base_url_ui, faker_data, wa
 @pytest.mark.ui
 @pytest.mark.positive
 @pytest.mark.registration_positive
-@pytest.mark.parametrize("email", [
-     ''.join(local_random.choices(string.ascii_lowercase, k=38)) + '@example.com',
-     ''.join(local_random.choices(string.ascii_lowercase, k=33)) + '@ex.ua',
-     f'{local_random.choice(string.ascii_lowercase)*2}@{local_random.choice(string.ascii_lowercase)*2}.{local_random.choice(string.ascii_lowercase)*2}'
-     ])
-def test_registration_min_and_max_email(browser, email, faker_data, base_url_ui, wait, success_alert_message):
+def test_registration_min_and_max_email(browser, faker_data, base_url_ui, wait, success_alert_message,
+                                        random_min_and_max_email):
     browser.get(base_url_ui + '/sign_up')
     wait.until(EC.presence_of_element_located((By.ID, 'username'))).send_keys(faker_data['name'])
     browser.find_element(By.ID, 'pass1').send_keys(faker_data['password'])
     browser.find_element(By.ID, 'pass2').send_keys(faker_data['password'])
-    browser.find_element(By.ID, 'email').send_keys(email)
+    browser.find_element(By.ID, 'email').send_keys(random_min_and_max_email)
 
     browser.find_element(By.CSS_SELECTOR, '.ui.button.blue').click()
     wait.until(EC.url_to_be(f'{base_url_ui}/sign_up'))  # как поправят будет /логин
@@ -103,19 +99,21 @@ def test_positive_registration_minimum_length_passwords(browser, base_url_ui, wa
 @pytest.mark.ui
 @pytest.mark.positive
 @pytest.mark.registration_positive
-@pytest.mark.parametrize('password',[
-    fake_element.password(length=50),
-    fake_element.password(length=50, lower_case= True, upper_case= False, special_chars= False),
-    fake_element.password(length=50, lower_case= False, upper_case= True, special_chars= False),
-    fake_element.password(length=50, lower_case= False, upper_case= False, special_chars= True),
-    fake_element.password(length=50, digits=False, upper_case=False, special_chars=False, lower_case= True)
+@pytest.mark.parametrize('password',[  # to do по хорошему заменить лямбды на ленивые фикстуры или
+    # сидирование генераторов + генерация постоянных данных
+    lambda: fake_element.password(length=50),
+    lambda: fake_element.password(length=50, lower_case= True, upper_case= False, special_chars= False),
+    lambda: fake_element.password(length=50, lower_case= False, upper_case= True, special_chars= False),
+    lambda: fake_element.password(length=50, lower_case= False, upper_case= False, special_chars= True),
+    lambda: fake_element.password(length=50, digits=True , upper_case=False, special_chars=False, lower_case= False)
 ])
 def test_positive_registration_maximum_length_passwords(browser, base_url_ui, password, wait, faker_data,
                                                            fail_alert_message, success_alert_message):
     browser.get(base_url_ui+'/sign_up')
     wait.until(EC.presence_of_element_located((By.ID, 'username'))).send_keys(faker_data['name'])
-    browser.find_element(By.ID, 'pass1').send_keys(password)
-    browser.find_element(By.ID, 'pass2').send_keys(password)
+    current_password = password()
+    browser.find_element(By.ID, 'pass1').send_keys(current_password)
+    browser.find_element(By.ID, 'pass2').send_keys(current_password)
     browser.find_element(By.ID, 'email').send_keys(faker_data['email'])
 
     browser.find_element(By.CSS_SELECTOR, '.ui.button.blue').click()

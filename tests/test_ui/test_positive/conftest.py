@@ -1,15 +1,25 @@
 import pytest
+import random
+import string
 from faker import Faker
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.firefox.service import Service as FirefoxService
+from webdriver_manager.chrome import ChromeDriverManager
+from webdriver_manager.firefox import GeckoDriverManager
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.chrome.options import Options as Ch_Option
 from selenium.webdriver.firefox.options import Options as FF_Option
-from webdriver_manager.chrome import ChromeDriverManager
-from webdriver_manager.firefox import GeckoDriverManager
+
+
+local_random = random.Random
+
+# '''Фиксирует seed для всех тестов. Необходимо для мульти потока'''
+# @pytest.fixture(autouse=True)
+# def set_random_seed():
+#     random.seed(42)
 
 
 @pytest.fixture
@@ -115,3 +125,12 @@ def registered_user_data(browser, base_url_ui, faker_data, wait, success_alert_m
     assert alert.get_attribute('textContent') == success_alert_message
 
     return faker_data
+
+#экспериментальная фикстура для тестов мультитридинга
+@pytest.fixture(params=[
+    lambda: ''.join(random.choices(string.ascii_lowercase, k=38)) + '@example.com',
+    lambda: ''.join(local_random.choices(string.ascii_lowercase, k=33)) + '@ex.ua',
+    lambda: f'{local_random.choice(string.ascii_lowercase)*2}@{local_random.choice(string.ascii_lowercase) * 2}.{local_random.choice(string.ascii_lowercase) * 2}'
+    ])
+def random_min_and_max_email(request):
+    return request.param()
