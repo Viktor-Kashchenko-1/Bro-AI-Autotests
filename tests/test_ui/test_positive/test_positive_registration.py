@@ -1,16 +1,30 @@
 import random
+import time
+import os
 import string
 import pytest
 from faker import Faker
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 
-fake_element = Faker("ru_Ru")
+from tests.test_ui.test_negative.conftest import faker_data
 
-"""нужно использовать для работы многопоточности с случайными параметризациями"""
-seed = 1
-fake_element.seed_instance(seed)
-random.seed(seed)
+#To do вынести на глобальный уровень инициализацию сидов обьектов с генераторами случайности
+def get_seeded_local_random_and_faker(seed: int = None):
+    """Создаёт random.Random и Faker с общим случайным сидом"""
+    if seed is None:
+        seed = int(time.time() * 1000) + os.getpid()
+    print(f"[DEBUG] Используемый сид: {seed}")
+
+    rnd = random.Random(seed)
+    fake = Faker()
+    fake.random = rnd
+    return rnd, fake
+
+"""нужно использовать конкретное число для работы многопоточности с *повторяемостью*  параметризации
+без конфликтов, иначе сыпятся Different tests were collected between gwX and gwY ексепшены"""
+local_random, fake_element = get_seeded_local_random_and_faker() # defined int 1,2,12534,etc. for multithreading case
+
 
 # 1 test
 @pytest.mark.ui
@@ -41,9 +55,9 @@ def test_positive_registration_all_entering(browser, base_url_ui, faker_data, wa
 @pytest.mark.positive
 @pytest.mark.registration_positive
 @pytest.mark.parametrize("email", [
-     ''.join(random.choices(string.ascii_lowercase, k=38)) + '@example.com',
-     ''.join(random.choices(string.ascii_lowercase, k=33)) + '@ex.ua',
-     f'{random.choice(string.ascii_lowercase)*2}@{random.choice(string.ascii_lowercase)*2}.{random.choice(string.ascii_lowercase)*2}'
+     ''.join(local_random.choices(string.ascii_lowercase, k=38)) + '@example.com',
+     ''.join(local_random.choices(string.ascii_lowercase, k=33)) + '@ex.ua',
+     f'{local_random.choice(string.ascii_lowercase)*2}@{local_random.choice(string.ascii_lowercase)*2}.{local_random.choice(string.ascii_lowercase)*2}'
      ])
 def test_registration_min_and_max_email(browser, email, faker_data, base_url_ui, wait, success_alert_message):
     browser.get(base_url_ui + '/sign_up')

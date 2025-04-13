@@ -8,9 +8,9 @@ fake_element = Faker("ru_Ru")
 
 """нужно использовать для работы многопоточности с случайными параметризациями 
 by faker/ ramdom"""
-seed = 1
-fake_element.seed_instance(seed)
-random.seed(seed)
+# seed = 1
+# fake_element.seed_instance(seed)
+# random.seed(seed)
 
 
 @pytest.mark.ui
