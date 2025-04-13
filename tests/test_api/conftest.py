@@ -55,5 +55,10 @@ def auth_header(auth_token):
 
 
 @pytest.fixture()
-def blank_field():
+def blank_field_error():
     return ['This field may not be blank.']
+
+
+@pytest.fixture()
+def required_field_error():
+    return 'This field is required.'
