@@ -28,7 +28,7 @@ def correct_response():
     pass
 
 @pytest.fixture
-def registered_user(api_url, faker_data):
+def registered_user_data(api_url, faker_data):
     user_data = {
         'username': faker_data['name'],
         'password': faker_data['password'],
@@ -40,10 +40,10 @@ def registered_user(api_url, faker_data):
 
 
 @pytest.fixture
-def auth_token(api_url, registered_user):
+def auth_token(api_url, registered_user_data):
     auth_data ={
-        'email': registered_user['email'],
-        'password': registered_user['password']
+        'email': registered_user_data['email'],
+        'password': registered_user_data['password']
     }
     response = requests.post(f'{api_url}/jwt/create/', json=auth_data)
     assert response.status_code == 200

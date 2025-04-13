@@ -180,8 +180,9 @@ def test_valid_email_domains(browser, base_url_ui, faker_data, wait, e_domain,
     assert alert.get_attribute('textContent') == fail_alert_message # времянка вместо 'Вы успешно зарегистрировались'
 
 
-
+# @pytest.mark.ui
+# @pytest.mark.positive
 # @pytest.mark.reg_data
-# def test_get_registered_user_data(registered_user_data):
+# def test_get_registered_user_data(registered_user_ui):
 #     print(registered_user_data)
 

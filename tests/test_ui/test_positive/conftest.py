@@ -112,7 +112,7 @@ def e_domain(request):
 
 
 @pytest.fixture
-def registered_user_data(browser, base_url_ui, faker_data, wait, success_alert_message, fail_alert_message):
+def registered_user_data_ui(browser, base_url_ui, faker_data, wait, success_alert_message, fail_alert_message):
     browser.get(f'{base_url_ui}/sign_up')
     username_field = wait.until(EC.presence_of_element_located((By.ID, 'username')))
     username_field.send_keys(faker_data['name'])

@@ -244,7 +244,7 @@ def test_password_minimal_required(api_url, faker_data):
 
 
 
-# регистрация с длинным паролем, явного ограничения нету.
+# регистрация с длинным паролем, явного ограничения нет.
 @pytest.mark.api
 @pytest.mark.positive
 @pytest.mark.user_registration
@@ -261,7 +261,7 @@ def test_long_password(api_url, faker_data, blank_field):
     assert response.json()['email'] == user_data['email']
     assert 'id' in response.json()
 
-# регистрация с паролем только из букв нижнего регистра, латиница (to do дополнить кирилицей, если влидно).
+# регистрация с паролем только из букв нижнего регистра, латиница (to do дополнить кириллицей, если валидно).
 @pytest.mark.api
 @pytest.mark.positive
 @pytest.mark.user_registration
@@ -280,9 +280,9 @@ def test_password_only_lower_case(api_url, faker_data):
     assert 'id' in response.json()
 
 
-# регистрация с паролем только из букв верхнего регистра, латиница (to do дополнить кирилицей, если влидно).
+# регистрация с паролем только из букв верхнего регистра, латиница (to do дополнить кириллицей, если валидно).
 @pytest.mark.api
-#@pytest.mark.positive
+@pytest.mark.positive
 @pytest.mark.user_registration
 def test_password_only_upper_case(api_url, faker_data, blank_field):
     pass_upper_case = Faker('ru_RU')
@@ -314,8 +314,6 @@ def test_password_only_special_chars(api_url, faker_data, blank_field):
     assert response.json()['email'] == user_data['email']
     assert 'id' in response.json()
 
-
-#--------------------------------------------------------------------------------------------------------------
 
 # регистрация со слишком коротким не валидным паролем (ограничения фреймворка- валидные от 8 символов)
 @pytest.mark.api
@@ -355,9 +353,10 @@ def test_password_blank(api_url, faker_data, blank_field):
 @pytest.mark.negative
 @pytest.mark.user_registration
 def test_password_only_digits(api_url, faker_data):
-    pass_only_digits = Faker('ru_RU')
+    fake = Faker('ru_RU')
+    pass_only_digits = fake.password(length=10, special_chars=False, upper_case=False, lower_case=False, digits=True)
     user_data = {
-        'password': pass_only_digits.password(length=10, special_chars= False, upper_case= False,lower_case= False, digits= True),
+        'password': pass_only_digits,
         'username': faker_data['name'],
         'email': faker_data['email']
     }
@@ -366,3 +365,38 @@ def test_password_only_digits(api_url, faker_data):
     assert response.status_code == 400
     assert response.json()['password'][0] == 'This password is entirely numeric.'
 #-------------------------------------------------------------------------------------------------------------------
+
+"""Общие тесты без конкретной привязки блока выполнения"""
+
+#-------------------------------------------------------------------------------------------------------------------
+# регистрация с отправкой пустых значений
+@pytest.mark.api
+@pytest.mark.negative
+@pytest.mark.user_registration
+def test_all_fields_empty(api_url):
+    user_data = {
+        'password': '',
+        'email': '',
+        'username': ''
+    }
+    response = requests.post(f'{api_url}/users/', json=user_data)
+    print(response.json())
+    assert response.status_code == 400
+    for key in ['password', 'email', 'username']:
+        assert response.json()[key][0] == 'This field may not be blank.', "there is no error about empty input of required field"
+
+
+@pytest.mark.api
+@pytest.mark.negative
+@pytest.mark.user_registration
+def test_registration_by_registered_credential(api_url, registered_user_data):
+    response = requests.post(f'{api_url}/users/', json=registered_user_data)
+    assert response.status_code == 400
+    assert response.json()['email'][0] == 'user with this email already exists.', (
+        'need be: user with this email already exists')
+
+
+@pytest.mark.api
+@pytest.mark.negative
+@pytest.mark.user_registration
+def test_registration_by_registered_credential(api_url, registered_user_data):
