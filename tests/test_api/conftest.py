@@ -62,3 +62,6 @@ def blank_field_error():
 @pytest.fixture()
 def required_field_error():
     return 'This field is required.'
+@pytest.fixture()
+def access_denied():
+    return 'Authentication credentials were not provided.'

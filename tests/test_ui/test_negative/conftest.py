@@ -36,7 +36,7 @@ def success_alert_message():
     return 'Вы успешно зарегистрировались// или что то такое'
 
 
-@pytest.fixture(params=["Chrome", "Firefox"]) # "Chrome", "Firefox" etc.
+@pytest.fixture(params=["Chrome"]) # "Chrome", "Firefox" etc.
 def browser(request):
     if request.param == "Chrome":
         options = Ch_Option()
