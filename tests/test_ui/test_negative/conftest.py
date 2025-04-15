@@ -40,9 +40,9 @@ def success_alert_message():
 def browser(request):
     if request.param == "Chrome":
         options = Ch_Option()
-        options.add_argument('--headless')
+        #options.add_argument('--headless')
         options.add_argument('--windows-size=1100,700')
-        options.add_argument("--disable-gpu")
+        #options.add_argument("--disable-gpu")
         driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
     elif request.param == "Firefox":
         options = FF_Option()

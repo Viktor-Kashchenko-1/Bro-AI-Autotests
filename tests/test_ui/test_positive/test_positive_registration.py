@@ -7,8 +7,9 @@ from faker import Faker
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 
-from tests.test_ui.test_negative.conftest import faker_data
 
+"""нужно использовать конкретное число для работы многопоточности с детерминированой параметризацией
+без конфликтов, иначе сыпятся Different tests were collected between gwX and gwY ексепшены"""
 #To do вынести на глобальный уровень инициализацию сидов обьектов с генераторами случайности
 # def get_seeded_local_random_and_faker(seed: int = None):
 #     """Создаёт random.Random и Faker с общим случайным сидом"""
@@ -21,8 +22,6 @@ from tests.test_ui.test_negative.conftest import faker_data
 #     fake.random = rnd
 #     return fake    #rnd, fake
 
-"""нужно использовать конкретное число для работы многопоточности с детерминированой параметризацией
-без конфликтов, иначе сыпятся Different tests were collected between gwX and gwY ексепшены"""
 #fake_element = get_seeded_local_random_and_faker() # defined int 1,2,12534,etc. for multithreading case
 fake_element = Faker()
 
@@ -44,7 +43,6 @@ def test_positive_registration_all_entering(browser, base_url_ui, faker_data, wa
 
     assert alert.get_attribute('textContent') == fail_alert_message # времянка вместо 'Вы успешно зарегистрировались'
 
-    #'Пользователь с таким email уже зарегистрирован в другом тасте'
     #'Что-то пошло не так. Пожалуйста, попробуйте позже'
 
 

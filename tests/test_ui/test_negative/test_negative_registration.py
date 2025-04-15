@@ -45,7 +45,7 @@ def test_negative_1_field_empty(browser, base_url_ui, wait, requirement_field_er
             counter += 1
     assert counter == 1
 
-
+#Пользователь с таким email уже зарегистрирован
 @pytest.mark.ui
 @pytest.mark.registration_negative
 @pytest.mark.parametrize("email, name, password", [
@@ -53,5 +53,14 @@ def test_negative_1_field_empty(browser, base_url_ui, wait, requirement_field_er
     ('user2@example.com', "UserTwo", "SecurePass456"),
     ('user3@example.com', "UserThree", "StrongPass789")
 ])
-def test_reg(email, name, password):
-    pass
+def test_user_already_registered(browser, wait, base_url_ui, email, name, password):
+    browser.get(f'{base_url_ui}/sign_up')
+    username_field = wait.until(EC.presence_of_element_located((By.ID, 'username')))
+    username_field.send_keys(name)
+    browser.find_element(By.ID, 'pass1').send_keys(password)
+    browser.find_element(By.ID, 'pass2').send_keys(password)
+    browser.find_element(By.ID, 'email').send_keys(email)
+    browser.find_element(By.CSS_SELECTOR, '.ui.button.blue').click()
+
+    alert = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "[role='alert'] div + div")))
+    assert alert.get_attribute('textContent') == 'email: user with this email already exists.'
