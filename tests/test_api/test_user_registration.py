@@ -495,10 +495,80 @@ def test_empty_body(api_url, required_field_error):
     for key in ['password', 'email', 'username']:
         assert response.json()[key][0] == required_field_error
 
-"""TO DO"""
+
 # 1) регистрация с пропущенным ключом юзернейма в запросе
+@pytest.mark.api
+@pytest.mark.negative
+@pytest.mark.user_registration
+def test_registration_skip_username_key(api_url, faker_data, required_field_error):
+    user_data = {
+        'email': faker_data['email'],
+        'password': faker_data['password']
+    }
+    response = requests.post(json=user_data, url= api_url+'/users/')
+    print()
+    print(response.json())
+    assert response.status_code == 400
+    assert response.json()['username'][0] == required_field_error
+#    ['password', 'email', 'username']:
 # 2) регистрация с пропущенным ключом пароля в запросе
+@pytest.mark.api
+@pytest.mark.negative
+@pytest.mark.user_registration
+def test_registration_skip_email_key(api_url, faker_data, required_field_error):
+    user_data = {
+        'password': faker_data['password'],
+        'username': faker_data['name']
+    }
+    response = requests.post(api_url+'/users/', json=user_data)
+    print()
+    print(response.json())
+    assert response.status_code == 400
+    assert response.json()['email'][0] == required_field_error
 # 3) регистрация с пропущенным ключом почты в запросе
+@pytest.mark.api
+@pytest.mark.negative
+@pytest.mark.user_registration
+def test_registration_skip_email_key(api_url, faker_data, required_field_error):
+    user_data = {
+        'email': faker_data['email'],
+        'username': faker_data['name']
+    }
+    response = requests.post(api_url+'/users/', json=user_data)
+    print()
+    print(response.json())
+    assert response.status_code == 400
+    assert response.json()['password'][0] == required_field_error
+# 4) ошибочный метод запроса
+@pytest.mark.api
+@pytest.mark.negative
+@pytest.mark.user_registration
+def test_registration_wrong_rest_method(faker_data, api_url, access_denied):
+    user_data = {
+        'username': faker_data['name'],
+        'email': faker_data['email'],
+        'password': faker_data['password']
+    }
+    response = requests.put(f'{api_url}/users/', json=user_data)
+    print()
+    print(response.json())
+    assert response.status_code == 401
+    assert 'detail' in response.json()
+    assert access_denied in response.json()['detail']
+
+
+# отправка запроса регистрации без тела
+@pytest.mark.api
+@pytest.mark.negative
+@pytest.mark.user_registration
+def test_registration_with_skip_body(api_url, required_field_error):
+    response = requests.post(url=f"""{api_url}/users/""")
+    assert response.status_code == 400
+
+    """(experiment) json->text and absolute comparison check with assert template """
+    assert response.text == '''{"username":["This field is required."],"email":["This field is required."],"password":["This field is required."]}'''
+
+
 
 # @pytest.mark.api
 # @pytest.mark.negative

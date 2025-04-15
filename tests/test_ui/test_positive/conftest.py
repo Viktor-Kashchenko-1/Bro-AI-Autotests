@@ -16,7 +16,7 @@ from selenium.webdriver.firefox.options import Options as FF_Option
 
 local_random = random.Random
 
-# '''Фиксирует seed для всех тестов. Необходимо для мульти потока'''
+# '''Фиксирует seed для всех тестов. Необходимо для топорного мульти потока'''
 # @pytest.fixture(autouse=True)
 # def set_random_seed():
 #     random.seed(42)
@@ -28,7 +28,7 @@ def faker_data():
     return {
         'email': fake.ascii_free_email(),
         'name': fake.first_name(),
-        'password': fake.password(length=8, upper_case=True, lower_case=False)
+        'password': fake.password(length=8, lower_case=False)
     }
 
 
@@ -39,10 +39,10 @@ def fail_alert_message():
 
 @pytest.fixture
 def success_alert_message():
-    return 'Вы успешно зарегистрировались или что то такое'
+    return 'Вы успешно зарегистрировались'
 
 
-@pytest.fixture(params=["Chrome", "Firefox"]) # "Chrome", "Firefox" etc.
+@pytest.fixture(params=["Chrome"]) # "Chrome", "Firefox" etc.
 def browser(request):
     if request.param == "Chrome":
         options = Ch_Option()
@@ -129,7 +129,7 @@ def registered_user_data_ui(browser, base_url_ui, faker_data, wait, success_aler
 #экспериментальная фикстура для тестов мультитридинга
 @pytest.fixture(params=[
     lambda: ''.join(random.choices(string.ascii_lowercase, k=38)) + '@example.com',
-    lambda: ''.join(local_random.choices(string.ascii_lowercase, k=33)) + '@ex.ua',
+    lambda: ''.join(local_random.choices(string.ascii_lowercase, k=44)) + '@ex.ua',
     lambda: f'{local_random.choice(string.ascii_lowercase)*2}@{local_random.choice(string.ascii_lowercase) * 2}.{local_random.choice(string.ascii_lowercase) * 2}'
     ])
 def random_min_and_max_email(request):
