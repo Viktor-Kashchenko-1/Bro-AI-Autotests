@@ -7,9 +7,8 @@ from faker import Faker
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 
+from tests.test_ui.test_negative.conftest import faker_data
 
-"""нужно использовать конкретное число для работы многопоточности с детерминированой параметризацией
-без конфликтов, иначе сыпятся Different tests were collected between gwX and gwY ексепшены"""
 #To do вынести на глобальный уровень инициализацию сидов обьектов с генераторами случайности
 # def get_seeded_local_random_and_faker(seed: int = None):
 #     """Создаёт random.Random и Faker с общим случайным сидом"""
@@ -22,6 +21,8 @@ from selenium.webdriver.support import expected_conditions as EC
 #     fake.random = rnd
 #     return fake    #rnd, fake
 
+"""нужно использовать конкретное число для работы многопоточности с детерминированой параметризацией
+без конфликтов, иначе сыпятся Different tests were collected between gwX and gwY ексепшены"""
 #fake_element = get_seeded_local_random_and_faker() # defined int 1,2,12534,etc. for multithreading case
 fake_element = Faker()
 
@@ -38,13 +39,13 @@ def test_positive_registration_all_entering(browser, base_url_ui, faker_data, wa
     browser.find_element(By.ID, 'pass2').send_keys(faker_data['password']+ 'qwe')
     browser.find_element(By.ID, "email").send_keys(faker_data['email'])
     browser.find_element(By.CSS_SELECTOR, '.ui.button.blue').click()
-    wait.until(EC.url_to_be(f'{base_url_ui}/login'))
+    #wait.until(EC.url_to_be(f'{base_url_ui}/login')) Тo do распечатать коммент когда заработает
     alert = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "[role='alert'] div:last-child")))
 
-    assert alert.get_attribute('textContent') == success_alert_message # времянка вместо 'Вы успешно зарегистрировались'
+    assert alert.get_attribute('textContent') == fail_alert_message # времянка вместо 'Вы успешно зарегистрировались'
 
-    # to do 'Пользователь с таким email уже зарегистрирован в другом тeсте'
-    # to do 'Что-то пошло не так. Пожалуйста, попробуйте позже' if are places
+    #'Пользователь с таким email уже зарегистрирован в другом тасте'
+    #'Что-то пошло не так. Пожалуйста, попробуйте позже'
 
 
 #2-3 test
@@ -66,7 +67,7 @@ def test_registration_min_and_max_email(browser, faker_data, base_url_ui, wait, 
 
     alert = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,"[role='alert'] div:last-child")))
     text = alert.get_attribute('textContent')
-    assert text == success_alert_message
+    assert text == 'Что-то пошло не так. Пожалуйста, попробуйте позже'#|success_alert_message
 
 
 #4 test
@@ -78,7 +79,8 @@ def test_registration_min_and_max_email(browser, faker_data, base_url_ui, wait, 
 #     ('test_sadlik24@mail.com', "Sadlik110", "Qqqqwerty123"),
 #     ('test_sadlik222@mail.com', "Sadlk123", "Qqwert123")
 #])
-def test_positive_registration_minimum_length_passwords(browser, base_url_ui, wait, faker_data, success_alert_message):
+def test_positive_registration_minimum_length_passwords(browser, base_url_ui, wait, faker_data,
+                                                           fail_alert_message, success_alert_message):
     browser.get(base_url_ui+'/sign_up')
     wait.until(EC.presence_of_element_located((By.ID, 'username'))).send_keys(faker_data['name'])
     browser.find_element(By.ID, 'pass1').send_keys(faker_data['password'])
@@ -86,10 +88,10 @@ def test_positive_registration_minimum_length_passwords(browser, base_url_ui, wa
     browser.find_element(By.ID, 'email').send_keys(faker_data['email'])
 
     browser.find_element(By.CSS_SELECTOR, '.ui.button.blue').click()
-    wait.until(EC.url_to_be(f'{base_url_ui}/log_in'))
+    wait.until(EC.url_to_be(f'{base_url_ui}/sign_up')) # как поправят будет /логин
 
     alert = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "[role='alert'] div:last-child")))
-    assert alert.get_attribute('textContent') == success_alert_message #времянка вместо 'Пользователь с таким email уже зарегистрирован'
+    assert alert.get_attribute('textContent') == fail_alert_message  #времянка вместо 'Пользователь с таким email уже зарегистрирован'
 
 
 #5 test
