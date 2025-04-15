@@ -6,8 +6,8 @@ from faker import Faker
 
 fake_element = Faker("ru_Ru")
 
-"""нужно использовать для работы многопоточности с случайными параметризациями 
-by faker/ ramdom"""
+"""нужно использовать для работы *топроной* многопоточности с случайными параметризациями 
+by faker/ ramdom. Более качественно прописан метод в конфиге позитивных тестов"""
 # seed = 1
 # fake_element.seed_instance(seed)
 # random.seed(seed)
@@ -48,9 +48,6 @@ def test_negative_1_field_empty(browser, base_url_ui, wait, requirement_field_er
 
 @pytest.mark.ui
 @pytest.mark.registration_negative
-
-
-@pytest.mark.trying
 @pytest.mark.parametrize("email, name, password", [
     ('user1@example.com', "UserOne", "Password123"),
     ('user2@example.com', "UserTwo", "SecurePass456"),
