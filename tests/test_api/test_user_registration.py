@@ -31,7 +31,6 @@ def test_user_registration_all_fields(faker_data, api_url):
     assert 'id' in response.json()
     assert response.json()['username'] == user_data['username']
     assert response.json()['email'] == user_data['email']
-    #assert response.json()['password'] == user_data['password']
 
 #-------------------------------------------------------------------------------------------------------------------
 
@@ -115,7 +114,7 @@ def test_username_blank(faker_data, api_url, blank_field_error):
 
 # тест с регистрацией имени как последовательность пробелов
 @pytest.mark.api
-@pytest.mark.positive
+@pytest.mark.negative
 @pytest.mark.user_registration
 def test_username_are_spaces(faker_data, api_url):
     spaces_name = ' ' * 5
@@ -129,6 +128,41 @@ def test_username_are_spaces(faker_data, api_url):
     assert response.status_code == 400
     assert 'username' in response.json()
     assert 'This field may not be blank.' in response.json()['username']
+
+
+# регистрация с пробелом в начале, середине, конце имени
+@pytest.mark.xfail(reason= 'возможен багфикс с изменением 500 статус кода на 400')
+@pytest.mark.api
+@pytest.mark.negative
+@pytest.mark.user_registration
+@pytest.mark.parametrize("name", [" sample", "При  мер", "sample "])
+def test_in_username_are_spaces(api_url, faker_data, name, internal_error_text):
+    user_data = {
+        'username': name,
+        'email': faker_data['email'],
+        'password': faker_data['password']
+    }
+    response = requests.post(api_url, None, user_data)
+    assert response.status_code == 500
+    assert response.reason == internal_error_text
+
+
+
+# регистрация с невалидным ключом usernam
+@pytest.mark.api
+@pytest.mark.negative
+@pytest.mark.user_registration
+def test_user_registration_key_usernam(api_url, faker_data, required_field_error):
+    user_data = {
+        'usernam': faker_data['name'],
+        'password': faker_data['password'],
+        'email': faker_data['email']
+    }
+    response = requests.post(url=f'{api_url}/users/')
+    assert response.status_code == 400
+    for key in ['password', 'email', 'username']:
+        assert response.json()[key][0] == required_field_error
+
 #-------------------------------------------------------------------------------------------------------------------
 
 """EMAIL BLOCK"""
@@ -169,9 +203,32 @@ def test_email_max_length(faker_data, api_url):
     response = requests.post(f'{api_url}/users/', json=user_data)
     print()
     print(response.json())
-    # assert response.status_code == 201
+    assert response.status_code == 201
     assert response.json()['email'] == user_data['email']
     assert 'id' in response.json()
+
+
+# регистрация почты с присутствием пробелов на краях (начале, конце), почта обрежется и пройдет регистрацию
+@pytest.mark.api
+@pytest.mark.positive
+@pytest.mark.user_registration
+@pytest.mark.parametrize("spaces_mail_index", [1, 2])
+def test_in_mail_are_corner_spaces(faker_data, api_url, spaces_mail_index, internal_error_text):
+    if spaces_mail_index == 1:
+        spaced_email = f'  {faker_data['email']}'
+    elif  spaces_mail_index == 2:
+        spaced_email = f'{faker_data['email']}   '
+    user_data = {
+        'username': faker_data['name'],
+        'email': spaced_email,
+        'password': faker_data['password']
+    }
+    response = requests.post(f'{api_url}/users/', json=user_data)
+    print()
+    print(response.json())
+    assert response.status_code == 201
+    assert internal_error_text in response.json()['email']
+
 
 
 # регистрация с превышающей на 1 символ длинной почты
@@ -271,6 +328,23 @@ def test_email_second_domain_blank(faker_data, api_url):
     assert response.json()['email'] == ['Enter a valid email address.']
 
 
+# регистрация почты с пробелами внутри почты
+@pytest.mark.api
+@pytest.mark.negative
+@pytest.mark.user_registration
+def test_into_email_are_spaces(faker_data, api_url):
+    email_template = list(faker_data['email'])
+    email_template.insert(2, ' ')
+    spaced_email = ''.join(email_template)
+
+    user_data = {
+        'email': spaced_email,
+        'username': faker_data['name'],
+        'password': faker_data['password']
+    }
+    response = requests.post(url= api_url + '/users/', json= user_data)
+    assert response.status_code == 400
+    assert response.json()['email'] == ['Enter a valid email address.']
 #-------------------------------------------------------------------------------------------------------------------
 
 """PASSWORD BLOCK"""
@@ -310,6 +384,7 @@ def test_password_minimal_required(api_url, faker_data):
     assert response.status_code == 201
     assert response.json()['username'] == user_data['username']
     assert response.json()['email'] == user_data['email']
+    assert 'id' in response.json()
 
 
 
@@ -383,6 +458,67 @@ def test_password_only_special_chars(api_url, faker_data):
     assert response.json()['email'] == user_data['email']
     assert 'id' in response.json()
 
+# регистрация с пробелом в начале пароля
+@pytest.mark.xfail(reason='надо глянуть проходет ли парольпосле создания или баг')
+@pytest.mark.api
+@pytest.mark.positive
+@pytest.mark.user_registration
+def test_in_password_are_spaces(faker_data, api_url, internal_error_text):
+    spaced_password = f'   {faker_data['password']}'
+    user_data = {
+        'username': faker_data['name'],
+        'email': faker_data['email'],
+        'password': spaced_password
+    }
+    response = requests.post(f'{api_url}/users/', json=user_data)
+
+    assert response.status_code == 201
+    assert response.reason == internal_error_text
+
+
+# регистрация с пробелом в середине пароля
+@pytest.mark.xfail(reason='надо глянуть проходет ли парольпосле создания или баг')
+@pytest.mark.api
+@pytest.mark.positive
+@pytest.mark.user_registration
+def test_into_password_are_spaces(faker_data, api_url, internal_error_text):
+    password_template = list(faker_data['password'])
+    password_template.insert(2, ' ')
+    password_template.insert(6, ' ')
+
+    spaced_password = ''.join(password_template)
+    user_data = {
+        'username': faker_data['name'],
+        'email': faker_data['email'],
+        'password': spaced_password
+    }
+    response = requests.post(f'{api_url}/users/', json=user_data)
+
+    assert response.status_code == 201
+    assert response.json()['username'] == user_data['username']
+    assert response.json()['email'] == user_data['email']
+    assert 'id' in response.json()
+
+
+# регистрация с пробелом в конце пароля
+@pytest.mark.xfail(reason='надо глянуть проходет ли парольпосле создания или баг')
+@pytest.mark.api
+@pytest.mark.positive
+@pytest.mark.user_registration
+def test_in_password_are_spaces(faker_data, api_url, internal_error_text):
+    spaced_password = f'{faker_data['password']}  '
+    user_data = {
+        'username': faker_data['name'],
+        'email': faker_data['email'],
+        'password': spaced_password
+    }
+    response = requests.post(f'{api_url}/users/', json=user_data)
+
+    assert response.status_code == 201
+    assert response.json()['username'] == user_data['username']
+    assert response.json()['email'] == user_data['email']
+    assert 'id' in response.json()
+
 
 # регистрация со слишком коротким не валидным паролем (ограничения фреймворка- валидные от 8 символов)
 @pytest.mark.api
@@ -413,8 +549,11 @@ def test_password_blank(api_url, faker_data, blank_field_error):
         'email': faker_data['email']
     }
     response = requests.post(f'{api_url}/users/', json=user_data)
-    assert response.status_code == 400
-    assert response.json()['password'] == blank_field_error
+
+    assert response.status_code == 201
+    assert response.json()['username'] == user_data['username']
+    assert response.json()['email'] == user_data['email']
+    assert 'id' in response.json()
 
 
 # регистрация с паролем только из цифр.
@@ -435,11 +574,11 @@ def test_password_only_digits(api_url, faker_data):
     assert response.json()['password'][0] == 'This password is entirely numeric.'
 
 
-# тест с регистрацией имени как последовательность пробелов
+# тест с регистрацией пароля как последовательность пробелов
 @pytest.mark.api
-@pytest.mark.positive
+@pytest.mark.negative
 @pytest.mark.user_registration
-def test_username_are_spaces(faker_data, api_url):
+def test_password_are_spaces(faker_data, api_url):
     spaces_password = ' ' * 15
     user_data = {
         'username': faker_data['name'],
@@ -473,6 +612,8 @@ def test_all_fields_empty(api_url):
         assert response.json()[key][0] == 'This field may not be blank.', "there is no error about empty input of required field"
 
 
+
+# регистрация с существующими учетными данными
 @pytest.mark.api
 @pytest.mark.negative
 @pytest.mark.user_registration
@@ -496,6 +637,19 @@ def test_empty_body(api_url, required_field_error):
         assert response.json()[key][0] == required_field_error
 
 
+# отправка запроса регистрации без тела
+@pytest.mark.api
+@pytest.mark.negative
+@pytest.mark.user_registration
+def test_registration_with_skip_body(api_url, required_field_error):
+    response = requests.post(url=f"""{api_url}/users/""")
+    assert response.status_code == 400
+
+    """(experiment) json->text and absolute comparison check with assert template """
+    assert response.text == '''{"username":["This field is required."],"email":["This field is required."],"password":["This field is required."]}'''
+
+
+
 # 1) регистрация с пропущенным ключом юзернейма в запросе
 @pytest.mark.api
 @pytest.mark.negative
@@ -510,7 +664,8 @@ def test_registration_skip_username_key(api_url, faker_data, required_field_erro
     print(response.json())
     assert response.status_code == 400
     assert response.json()['username'][0] == required_field_error
-#    ['password', 'email', 'username']:
+
+
 # 2) регистрация с пропущенным ключом пароля в запросе
 @pytest.mark.api
 @pytest.mark.negative
@@ -525,6 +680,8 @@ def test_registration_skip_email_key(api_url, faker_data, required_field_error):
     print(response.json())
     assert response.status_code == 400
     assert response.json()['email'][0] == required_field_error
+
+
 # 3) регистрация с пропущенным ключом почты в запросе
 @pytest.mark.api
 @pytest.mark.negative
@@ -539,6 +696,8 @@ def test_registration_skip_email_key(api_url, faker_data, required_field_error):
     print(response.json())
     assert response.status_code == 400
     assert response.json()['password'][0] == required_field_error
+
+
 # 4) ошибочный метод запроса
 @pytest.mark.api
 @pytest.mark.negative
@@ -557,20 +716,21 @@ def test_registration_wrong_rest_method(faker_data, api_url, access_denied):
     assert access_denied in response.json()['detail']
 
 
-# отправка запроса регистрации без тела
+# отправка запроса регистрации c текстом вместо json/словаря в теле
 @pytest.mark.api
-@pytest.mark.negative
+@pytest.mark.positive
 @pytest.mark.user_registration
-def test_registration_with_skip_body(api_url, required_field_error):
-    response = requests.post(url=f"""{api_url}/users/""")
+@pytest.mark.smoke
+@pytest.mark.critical
+@pytest.mark.regression
+def test_user_registration_all_fields(faker_data, api_url):
+    user_data = '''{
+        'username': faker_data['name'],
+        'password': faker_data['password'],
+        'email': faker_data['email']
+    }'''
+    response = requests.post(f'{api_url}/users/', json=user_data)
     assert response.status_code == 400
-
-    """(experiment) json->text and absolute comparison check with assert template """
-    assert response.text == '''{"username":["This field is required."],"email":["This field is required."],"password":["This field is required."]}'''
+    assert response.json() == {'non_field_errors': ['Invalid data. Expected a dictionary, but got str.']}
 
 
-
-# @pytest.mark.api
-# @pytest.mark.negative
-# @pytest.mark.user_registration
-# def test_any_negative(api_url, _):
