@@ -57,7 +57,7 @@ def test_email_duplicate(api_url, registered_user_data, faker_data):
 """USERNAME BLOCK"""
 
 #-------------------------------------------------------------------------------------------------------------------
-# регистрация с минимальной длинной  юзернейма
+# регистрация с минимальной длиной  юзернейма
 @pytest.mark.api
 @pytest.mark.positive
 @pytest.mark.user_registration
@@ -75,7 +75,7 @@ def test_username_min_length(faker_data, api_url):
     assert 'id' in response.json()
     assert response.json()['username'] == user_data['username']
 
-# регистрация с максимальной длинной  юзернейма
+# регистрация с максимальной длиной юзернейма
 @pytest.mark.api
 @pytest.mark.positive
 @pytest.mark.user_registration
@@ -96,7 +96,7 @@ def value_exceeded(request):
     return [f'Ensure this field has no more than {request} characters.']
 
 
-# регистрация с превышающей на 1 символ длинной юзернейма
+# регистрация с превышающей на 1 символ длиной юзернейма
 @pytest.mark.api
 @pytest.mark.negative
 @pytest.mark.user_registration
@@ -251,7 +251,7 @@ def generate_min_email():
     tld = ''.join(random.sample(string.ascii_lowercase, 2))
     return f'{local_part}@{domain}.{tld}'
 
-# регистрация с минимальной допустимой длинной почты
+# регистрация с минимальной допустимой длиной почты
 @pytest.mark.skip(reason='Запускать в крайнем случаи. К-во тест данных ограничено.')
 @pytest.mark.api
 @pytest.mark.positive
@@ -270,7 +270,7 @@ def test_email_min_length(faker_data, api_url):
     assert response.json()['email'] == email
 
 
-# регистрация с максимальной длинной почты 50 символов
+# регистрация с максимальной длиной почты 50 символов
 @pytest.mark.api
 @pytest.mark.positive
 @pytest.mark.user_registration
@@ -312,7 +312,7 @@ def test_in_mail_are_corner_spaces(faker_data, api_url, spaces_mail_index, inter
 
 
 
-# регистрация с превышающей на 1 символ длинной почты
+# регистрация с превышающей на 1 символ длиной почты
 @pytest.mark.api
 @pytest.mark.negative
 @pytest.mark.user_registration
@@ -479,7 +479,7 @@ def test_user_registration_key_passwor(api_url, faker_data, required_field_error
 """PASSWORD BLOCK"""
 
 #-------------------------------------------------------------------------------------------------------------------
-# регистрация с минимальной длинной пароля. (ограничения фреймворка- валидные от 8 символов)
+# регистрация с минимальной длиной пароля. Ограничения фреймворка- валидные с длиной от 8 символов
 @pytest.mark.api
 @pytest.mark.positive
 @pytest.mark.user_registration
@@ -496,9 +496,8 @@ def test_password_minimal_length(api_url, faker_data):
     assert response.json()['email'] == user_data['email']
 
 
-# регистрация с минимальным набором из требований валидности пароля. (ограничения фреймворка- валидный пароль
-# от 8 символов, из них: (надо ресерчить требования, исходя из опыта будет 1 прописная, 1 спецсимвол,
-# 1 цифра, 1 заглавная)
+# регистрация с минимальным набором из требований валидности пароля. Валидный пароль от 8 символов, из них:
+# (надо ресерчить конкретные требования), исходя из опыта будет 1 прописная, 1 спецсимвол, 1 цифра, 1 заглавная).
 @pytest.mark.api
 @pytest.mark.positive
 @pytest.mark.user_registration
@@ -516,6 +515,21 @@ def test_password_minimal_required(api_url, faker_data):
     assert 'id' in response.json()
 
 
+# регистрация с длиной пароля 9 символов
+@pytest.mark.api
+@pytest.mark.positive
+@pytest.mark.user_registration
+def test_password_minimal_length(api_url, faker_data):
+    pass_length_9 = Faker('ru_RU')
+    user_data = {
+        'password': pass_length_9.password(length=9),
+        'username': faker_data['name'],
+        'email': faker_data['email']
+    }
+    response = requests.post(f'{api_url}/users/', json=user_data)
+    assert response.status_code == 201
+    assert response.json()['username'] == user_data['username']
+    assert response.json()['email'] == user_data['email']
 
 # регистрация с длинным паролем, явного ограничения нет.
 @pytest.mark.api
@@ -649,14 +663,14 @@ def test_in_password_are_spaces(faker_data, api_url, internal_error_text):
     assert 'id' in response.json()
 
 
-# регистрация со слишком коротким не валидным паролем (ограничения фреймворка- валидные от 8 символов)
+# регистрация с не валидным паролем из 7 символов (ограничения фреймворка- валидные от 8 символов)
 @pytest.mark.api
 @pytest.mark.negative
 @pytest.mark.user_registration
 def test_password_too_short(api_url, faker_data):
-    minimal_pass_length = Faker('ru_RU')
+    password_less_min = Faker('ru_RU')
     user_data = {
-        'password': minimal_pass_length.password(length=7),
+        'password': password_less_min.password(length=7),
         'username': faker_data['name'],
         'email': faker_data['email']
     }
@@ -665,6 +679,7 @@ def test_password_too_short(api_url, faker_data):
     assert response.status_code == 400
     password_warning = 'This password is too short. It must contain at least 8 characters.'
     assert response.json()['password'][0] == password_warning
+
 
 # регистрация с пустым паролем
 @pytest.mark.api
