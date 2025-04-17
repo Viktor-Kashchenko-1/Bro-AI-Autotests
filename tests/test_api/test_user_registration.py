@@ -129,7 +129,23 @@ def test_username_blank(faker_data, api_url, blank_field_error):
 
     assert response.status_code == 400
     assert response.json()['username'] == blank_field_error
-    # to do может имеет смысл вынести ['This field may not be blank.'] в фикстуру и тд.
+
+
+# регистрация с username=None
+@pytest.mark.api
+@pytest.mark.negative
+@pytest.mark.user_registration
+def test_username_none(api_url, faker_data, null_error_text):
+    user_data = {
+        'username': None,
+        'password': faker_data['password'],
+        'email': faker_data['email']
+    }
+    response = requests.post(url=f'{api_url}/users/', json=user_data)
+    print(response.json())
+    assert response.status_code == 400
+    assert 'username' in response.json()
+    assert null_error_text == response.json()['username'][0]
 
 
 # тест с регистрацией имени как последовательность пробелов
@@ -361,6 +377,21 @@ def test_email_blank(faker_data, api_url,blank_field_error):
     assert response.json()['email'][0] == blank_field_error[0] #проверил как работает ассерт через индекс списка в ответе
 
 
+# регистрация с почтой None
+@pytest.mark.api
+@pytest.mark.negative
+@pytest.mark.user_registration
+def test_email_none(api_url, faker_data, null_error_text):
+    user_data = {
+        'username': faker_data['name'],
+        'password': faker_data['password'],
+        'email': None
+    }
+    response = requests.post(url=f'{api_url}/users/', json=user_data)
+    assert response.status_code == 400
+    assert 'email' in response.json()
+    assert null_error_text == response.json()['email'][0]
+
 # регистрация почты с пропущенной доменной частью до точки
 @pytest.mark.api
 @pytest.mark.negative
@@ -531,7 +562,7 @@ def test_password_minimal_length(api_url, faker_data):
     assert response.json()['username'] == user_data['username']
     assert response.json()['email'] == user_data['email']
 
-# регистрация с длинным паролем, явного ограничения нет.
+# регистрация с длинным паролем на 60 символов, явного ограничения нет.
 @pytest.mark.api
 @pytest.mark.positive
 @pytest.mark.user_registration
@@ -663,7 +694,7 @@ def test_in_password_are_spaces(faker_data, api_url, internal_error_text):
     assert 'id' in response.json()
 
 
-# регистрация с не валидным паролем из 7 символов (ограничения фреймворка- валидные от 8 символов)
+# регистрация с паролем из 7 символов (ограничения фреймворка- валидные от 8 символов)
 @pytest.mark.api
 @pytest.mark.negative
 @pytest.mark.user_registration
@@ -694,10 +725,25 @@ def test_password_blank(api_url, faker_data, blank_field_error):
     }
     response = requests.post(f'{api_url}/users/', json=user_data)
 
-    assert response.status_code == 201
-    assert response.json()['username'] == user_data['username']
-    assert response.json()['email'] == user_data['email']
-    assert 'id' in response.json()
+    assert response.status_code == 400
+    assert 'password' in response.json()
+    assert blank_field_error == response.json()['password']
+
+
+# регистрация с паролем None
+@pytest.mark.api
+@pytest.mark.negative
+@pytest.mark.user_registration
+def test_password_none(api_url, faker_data, null_error_text):
+    user_data = {
+        'username': faker_data['name'],
+        'password': None,
+        'email': faker_data['email']
+    }
+    response = requests.post(url=f'{api_url}/users/', json=user_data)
+    assert response.status_code == 400
+    assert 'password' in response.json()
+    assert null_error_text == response.json()['password'][0]
 
 
 # регистрация с паролем только из цифр.
@@ -717,6 +763,24 @@ def test_password_only_digits(api_url, faker_data):
     assert response.status_code == 400
     assert response.json()['password'][0] == 'This password is entirely numeric.'
 
+
+# регистрация с паролем как числовое значение.
+@pytest.mark.api
+@pytest.mark.negative
+@pytest.mark.user_registration
+def test_password_is_number(api_url, faker_data):
+    fake = Faker('ru_RU')
+    password_is_number = int(fake.password(length=10, special_chars=False, upper_case=False,
+                                            lower_case=False, digits=True))
+    user_data = {
+        'password': password_is_number,
+        'username': faker_data['name'],
+        'email': faker_data['email']
+    }
+    response = requests.post(f'{api_url}/users/', json=user_data)
+    print(response.json())
+    assert response.status_code == 400
+    assert 'This password is entirely numeric.' in response.json()['password']
 
 # тест с регистрацией пароля как последовательность пробелов
 @pytest.mark.api

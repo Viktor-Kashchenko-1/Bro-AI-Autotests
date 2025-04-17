@@ -72,3 +72,7 @@ def access_denied():
 @pytest.fixture()
 def internal_error_text():
     return "Internal Server Error"
+
+@pytest.fixture()
+def null_error_text():
+    return 'This field may not be null.'
