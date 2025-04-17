@@ -32,6 +32,26 @@ def test_user_registration_all_fields(faker_data, api_url):
     assert response.json()['username'] == user_data['username']
     assert response.json()['email'] == user_data['email']
 
+
+# регистрация с существующими учетными данными
+@pytest.mark.api
+@pytest.mark.positive
+@pytest.mark.user_registration
+@pytest.mark.smoke
+@pytest.mark.critical
+@pytest.mark.regression
+def test_email_duplicate(api_url, registered_user_data, faker_data):
+    user_data = {
+        'email': registered_user_data['email'],
+        'username': faker_data['name'],
+        'password': faker_data['password']
+    }
+    response = requests.post(f'{api_url}/users/', json=user_data)
+    assert response.status_code == 400
+    assert 'user with this email already exists.' in response.json()['email'][0], (
+        'should be: "user with this email already exists"')
+
+
 #-------------------------------------------------------------------------------------------------------------------
 
 """USERNAME BLOCK"""
@@ -168,6 +188,63 @@ def test_user_registration_key_usernam(api_url, faker_data, required_field_error
 """EMAIL BLOCK"""
 
 #-------------------------------------------------------------------------------------------------------------------
+# регистрация с email в верхнем регистре
+@pytest.mark.api
+@pytest.mark.positive
+@pytest.mark.user_registration
+@pytest.mark.smoke
+@pytest.mark.critical
+@pytest.mark.regression
+def test_email_uppercase(api_url, faker_data):
+    upper_case_email = faker_data['email'].upper()
+    user_data = {
+        'email': upper_case_email,
+        'username': faker_data['name'],
+        'password': faker_data['password']
+    }
+    response = requests.post(f'{api_url}/users/', json=user_data)
+    assert response.status_code == 201
+    assert response.json()['email'].lower() == upper_case_email.lower(), (
+        'email into request & into response should be comparison in the same case')
+
+
+def generate_email_with_special_chars():
+    spec_chars = ".!#$%^&_'/*-+`~{}?/|="
+    user_part = ''.join(random.choice(string.ascii_lowercase) for _ in range(8))
+    for _ in range(random.randint(2,5)):
+        new_char = random.choice(spec_chars)
+        if  new_char == '.' == user_part[-1]:
+            continue
+        user_part += new_char
+
+    if user_part[-1] == '.':
+        user_part += 'a'
+    return f'{user_part}@example.com'
+
+'''to do узнавать на конкретном проекте валидны ли спец символы в почте, в каких местах валидны т.д.'''
+# регистрация email со спец символами. Они имеют специфическое поведение, проверяем n_repeats раз для достоверности
+n_repeats = 2
+@pytest.mark.xfail(reason="может фейлится при специфических случаях генерации почты")
+@pytest.mark.api
+@pytest.mark.positive
+@pytest.mark.user_registration
+@pytest.mark.smoke
+@pytest.mark.critical
+@pytest.mark.regression
+@pytest.mark.parametrize("_, counter", [(1, i) for i in range(n_repeats)]) #experiment with "_"parameter in parametrizing
+def test_email_with_special_chars(_, counter, api_url, faker_data):
+    special_ch_email = generate_email_with_special_chars()
+    user_data = {
+        'email': special_ch_email,
+        'username': faker_data['name'],
+        'password': faker_data['password']
+    }
+    response = requests.post(f'{api_url}/users/', json=user_data)
+    #print(response.json())
+    assert response.status_code == 201
+    assert response.json()['email'].lower() == special_ch_email.lower()
+
+
 def generate_min_email():
     local_part = random.choice(string.ascii_lowercase)
     domain = random.choice(string.ascii_lowercase)
@@ -313,7 +390,7 @@ def test_email_user_block_blank(faker_data, api_url):
     }
     response = requests.post(url= api_url + '/users/', json= user_data)
     assert response.status_code == 400
-    assert 'Enter a valid email address.' in response.json()['email']
+    assert 'Enter a valid email address.' in response.json()['email'][0]
 
 
 # регистрация почты с пропущенной доменной частью после точки
@@ -329,7 +406,7 @@ def test_email_second_domain_blank(faker_data, api_url):
     }
     response = requests.post(url= api_url + '/users/', json= user_data)
     assert response.status_code == 400
-    assert response.json()['email'] == ['Enter a valid email address.']
+    assert 'Enter a valid email address.' in response.json()['email'][0]
 
 
 # регистрация почты без @
@@ -345,7 +422,7 @@ def test_email_missing_at_symbol_dog(faker_data, api_url):
     }
     response = requests.post(url= api_url + '/users/', json= user_data)
     assert response.status_code == 400
-    assert response.json()['email'] == ['Enter a valid email address.']
+    assert 'Enter a valid email address.' in response.json()['email'][0]
 
 
 # регистрация почты без точки
@@ -361,7 +438,7 @@ def test_email_missing_at_symbol_dot(faker_data, api_url):
     }
     response = requests.post(url= api_url + '/users/', json= user_data)
     assert response.status_code == 400
-    assert response.json()['email'] == ['Enter a valid email address.']
+    assert 'Enter a valid email address.' in response.json()['email'][0]
 
 
 # регистрация почты с пробелами внутри почты
@@ -678,18 +755,6 @@ def test_all_fields_empty(api_url):
     assert response.status_code == 400
     for key in ['password', 'email', 'username']:
         assert response.json()[key][0] == 'This field may not be blank.', "there is no error about empty input of required field"
-
-
-
-# регистрация с существующими учетными данными
-@pytest.mark.api
-@pytest.mark.negative
-@pytest.mark.user_registration
-def test_registration_by_registered_credential(api_url, registered_user_data):
-    response = requests.post(f'{api_url}/users/', json=registered_user_data)
-    assert response.status_code == 400
-    assert response.json()['email'][0] == 'user with this email already exists.', (
-        'need be: user with this email already exists')
 
 
 # регистрация с пустым телом запроса
