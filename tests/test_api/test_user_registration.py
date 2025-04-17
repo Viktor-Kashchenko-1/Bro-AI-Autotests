@@ -168,28 +168,32 @@ def test_user_registration_key_usernam(api_url, faker_data, required_field_error
 """EMAIL BLOCK"""
 
 #-------------------------------------------------------------------------------------------------------------------
-# регистрация с минимальной длинной почты
-@pytest.mark.skip(reason= 'Запускать в крайнем случаи. К-во тест данных сильно ограничено.')
+def generate_min_email():
+    local_part = random.choice(string.ascii_lowercase)
+    domain = random.choice(string.ascii_lowercase)
+    tld = ''.join(random.sample(string.ascii_lowercase, 2))
+    return f'{local_part}@{domain}.{tld}'
+
+# регистрация с минимальной допустимой длинной почты
+@pytest.mark.skip(reason='Запускать в крайнем случаи. К-во тест данных ограничено.')
 @pytest.mark.api
 @pytest.mark.positive
+@pytest.mark.smoke
 @pytest.mark.user_registration
-@pytest.mark.parametrize('min_emails',['@ua.ac','@ab.qw', '@ru.cv', '@ru.фф', '@фы.фф'])
-#без фейка срабатывает единожды на 1 оригинальный символ =( далее ошибка- почта уже существует
-# валидные, по мнению ИИ, кейсы система не ест  "1@1.1", 'a@io', '_@_.io', '-@-.ai', '@@@.@', '" "@x.y'
-def test_email_min_length(faker_data, api_url, min_emails):
-    char = 'g' # костыль на изменение первого символа почты для оригинальности регистрации
+def test_email_min_length(faker_data, api_url):
+    email = generate_min_email()
     user_data = {
         'username': faker_data['name'],
-        'email': char + min_emails,
+        'email': email,
         'password': faker_data['password']
     }
     response = requests.post(f'{api_url}/users/', json=user_data)
     assert response.status_code == 201
     assert 'id' in response.json()
-    assert response.json()['username'] == user_data['username']
+    assert response.json()['email'] == email
 
 
-# регистрация с максимальной длинной почты
+# регистрация с максимальной длинной почты 50 символов
 @pytest.mark.api
 @pytest.mark.positive
 @pytest.mark.user_registration
@@ -285,9 +289,9 @@ def test_email_blank(faker_data, api_url,blank_field_error):
 @pytest.mark.negative
 @pytest.mark.user_registration
 def test_email_first_domain_blank(faker_data, api_url):
-    email_template = 'lukjan1999@.com'
+    invalid_email = 'lukjan1999@.com'
     user_data = {
-        'email': email_template,
+        'email': invalid_email,
         'username': faker_data['name'],
         'password': faker_data['password']
     }
@@ -301,9 +305,9 @@ def test_email_first_domain_blank(faker_data, api_url):
 @pytest.mark.negative
 @pytest.mark.user_registration
 def test_email_user_block_blank(faker_data, api_url):
-    email_template = '@gmail.com'
+    invalid_email = '@gmail.com'
     user_data = {
-        'email': email_template,
+        'email': invalid_email,
         'username': faker_data['name'],
         'password': faker_data['password']
     }
@@ -317,9 +321,41 @@ def test_email_user_block_blank(faker_data, api_url):
 @pytest.mark.negative
 @pytest.mark.user_registration
 def test_email_second_domain_blank(faker_data, api_url):
-    email_template = 'lukjan1999@gmail.'
+    invalid_email = 'lukjan1999@gmail.'
     user_data = {
-        'email': email_template,
+        'email': invalid_email,
+        'username': faker_data['name'],
+        'password': faker_data['password']
+    }
+    response = requests.post(url= api_url + '/users/', json= user_data)
+    assert response.status_code == 400
+    assert response.json()['email'] == ['Enter a valid email address.']
+
+
+# регистрация почты без @
+@pytest.mark.api
+@pytest.mark.negative
+@pytest.mark.user_registration
+def test_email_missing_at_symbol_dog(faker_data, api_url):
+    invalid_email = 'Template_invalid.com'
+    user_data = {
+        'email': invalid_email,
+        'username': faker_data['name'],
+        'password': faker_data['password']
+    }
+    response = requests.post(url= api_url + '/users/', json= user_data)
+    assert response.status_code == 400
+    assert response.json()['email'] == ['Enter a valid email address.']
+
+
+# регистрация почты без точки
+@pytest.mark.api
+@pytest.mark.negative
+@pytest.mark.user_registration
+def test_email_missing_at_symbol_dot(faker_data, api_url):
+    invalid_email = 'Template@invalid_com'
+    user_data = {
+        'email': invalid_email,
         'username': faker_data['name'],
         'password': faker_data['password']
     }
@@ -333,9 +369,9 @@ def test_email_second_domain_blank(faker_data, api_url):
 @pytest.mark.negative
 @pytest.mark.user_registration
 def test_into_email_are_spaces(faker_data, api_url):
-    email_template = list(faker_data['email'])
-    email_template.insert(2, ' ')
-    spaced_email = ''.join(email_template)
+    invalid_email = list(faker_data['email'])
+    invalid_email.insert(2, ' ')
+    spaced_email = ''.join(invalid_email)
 
     user_data = {
         'email': spaced_email,
@@ -345,6 +381,22 @@ def test_into_email_are_spaces(faker_data, api_url):
     response = requests.post(url= api_url + '/users/', json= user_data)
     assert response.status_code == 400
     assert response.json()['email'] == ['Enter a valid email address.']
+
+
+# регистрация с невалидным ключом emal
+@pytest.mark.api
+@pytest.mark.negative
+@pytest.mark.user_registration
+def test_user_registration_key_passwor(api_url, faker_data, required_field_error):
+    user_data = {
+        'username': faker_data['name'],
+        'password': faker_data['password'],
+        'emal': faker_data['email']
+    }
+    response = requests.post(url=f'{api_url}/users/')
+    assert response.status_code == 400
+    for key in ['password', 'email', 'username']:
+        assert response.json()[key][0] == required_field_error
 #-------------------------------------------------------------------------------------------------------------------
 
 """PASSWORD BLOCK"""
@@ -590,6 +642,22 @@ def test_password_are_spaces(faker_data, api_url):
     assert response.status_code == 400
     assert 'password' in response.json()
     assert 'This field may not be blank.' in response.json()['password']
+
+
+# регистрация с невалидным ключом passwor
+@pytest.mark.api
+@pytest.mark.negative
+@pytest.mark.user_registration
+def test_user_registration_key_passwor(api_url, faker_data, required_field_error):
+    user_data = {
+        'username': faker_data['name'],
+        'passwor': faker_data['password'],
+        'email': faker_data['email']
+    }
+    response = requests.post(url=f'{api_url}/users/')
+    assert response.status_code == 400
+    for key in ['password', 'email', 'username']:
+        assert response.json()[key][0] == required_field_error
 #-------------------------------------------------------------------------------------------------------------------
 
 """Общие тесты без конкретной привязки блока выполнения"""
@@ -715,22 +783,41 @@ def test_registration_wrong_rest_method(faker_data, api_url, access_denied):
     assert 'detail' in response.json()
     assert access_denied in response.json()['detail']
 
-
-# отправка запроса регистрации c текстом вместо json/словаря в теле
+"""To Do поробовать как на уроке сделать с хедером что жейсон шлем"""
+# отправка запроса регистрации c данными текстом вместо json/словаря в теле
 @pytest.mark.api
 @pytest.mark.positive
 @pytest.mark.user_registration
 @pytest.mark.smoke
-@pytest.mark.critical
+#@pytest.mark.High
 @pytest.mark.regression
 def test_user_registration_all_fields(faker_data, api_url):
-    user_data = '''{
-        'username': faker_data['name'],
-        'password': faker_data['password'],
-        'email': faker_data['email']
-    }'''
-    response = requests.post(f'{api_url}/users/', json=user_data)
+    user_data_text = '''{
+   'username': faker_data['name'],
+   'password': faker_data['password'],
+   'email': faker_data['email']
+}'''
+    headers = {'Content-Type': 'application/json'}
+
+    response = requests.post(f'{api_url}/users/', user_data_text, headers=headers)
     assert response.status_code == 400
     assert response.json() == {'non_field_errors': ['Invalid data. Expected a dictionary, but got str.']}
 
 
+# отправка невалидного json где пропущена запятая
+@pytest.mark.api
+@pytest.mark.positive
+@pytest.mark.user_registration
+@pytest.mark.regression
+def test_user_registration_all_fields(faker_data, api_url):
+    invalid_data_json = '''{
+   'username': faker_data['name']
+   'password': faker_data['password'],
+   'email': faker_data['email']
+}'''
+    headers = {"Content-Type": "application/json"}
+
+    response = requests.post(f'{api_url}/users/', invalid_data_json, headers=headers)
+    assert response.status_code == 400
+    assert 'detail' in response.json()
+    assert 'JSON parse error' in response.json()['detail']
